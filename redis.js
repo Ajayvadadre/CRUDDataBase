@@ -12,101 +12,60 @@ server.get("/", async (req, res) => {
   res.send("Connected redis successfully");
 });
 
-//Get data
+// Get data
 server.get("/redis/get/:redisValue", async (req, res) => {
-  let keyName = req.params.rediValue;
-  let redisData = await redis.set(keyName, "value");
-  console.log(redisData);
-  redis.zrange("useradata", 0, 2, "WITHSCORES", (err, res) => {
-    client.zrange('myset', 0, -1, 'WITHSCORES', (err, reply) => {
-        if (err) {
-          console.error(err);
-        } else {
-          const jsonData = reply[0][1];
-          const json = JSON.parse(jsonData);
-          console.log(json);
-        }
-      });
-  });
-
+  const keyName = req.params.redisValue;
+  const userName = req.params.userName;
   try {
-    redis.get(keyName, (err, result) => {
-      if (err) {
-        console.log(err);
-      }
-      console.log("Get data successfull", result);
-    });
+    console.log(keyName);
+    // const redisHgetAll = await redis.hgetall();
+    const redisData = await redis.zrange(
+      keyName,
+      0,
+      2,
+      "WITHSCORES",
+    );
+    res.send(redisData);
+    console.log(redisData);
   } catch (error) {
     console.log(error);
+    res.send("Error retrieving data from Redis");
   }
 });
 
-//create data
+// Create data
 server.post("/redis/create", async (req, res) => {
+  const keyName = req.body.keyName;
   const data = req.body;
-  console.log("useradata" + data);
-  const mainData = JSON.stringify(data);
-  console.log(mainData);
-  let dataUpload = await redis.zadd(
-    "userData",
-    1,
-    mainData,
-    (err, response) => {
-      if (err) {
-        console.log(err);
-      }
-      console.log("successfully added" + response);
-    }
-  );
+  const score = req.body.id;
+  const mainData = JSON.stringify(data); 
+  const scoreTime=  Date.now();
+  console.log(scoreTime);
+
   try {
-    console.log("Added data successfully");
-    res.send("Created data successfully", dataUpload);
+    // const response = await redis.zadd(keyName, 1, mainData);
+    // const redisHget = await redis.hset(userName, data);
+    const response = await redis.zincrby(keyName, scoreTime, mainData);
+    res.send("Created data successfully");
   } catch (error) {
-    console.log(error);
-    res.send("Create data error: " + error);
+    console.error(error);
+    res.send("Error creating data in Redis");
   }
 });
 
-server.del("/redis/delete", async (req, res) => {
-  const { username, password } = req.body;
-  console.log(data);
-  await redis.zrem("userData", () => {});
+// Delete data
+server.del("/redis/delete/:keyName", async (req, res) => {
+  // const { username, password } = req.body;
+  const keyName = req.params.keyName;
   try {
-    console.log("Deleted data successfully");
+    const redisHdel = await redis.del(keyName);
+    // const response = await redis.zrem(keyName, username);
     res.send("Deleted data successfully");
   } catch (error) {
-    console.log(error);
-    res.send("Deleted data error: " + error);
+    console.error(error);
+    res.send("Error deleting data from Redis");
   }
 });
-// server.put("/redis/update", async (req, res) => {
-//   const { key, value } = req.body;
-//   console.log(data);
-//   await redis.set(key, value);
-//   try {
-//     console.log("Added data successfully");
-//     res.send("Created data successfully");
-//   } catch (error) {
-//     console.log(error);
-//     res.send("Create data error: " + error);
-//   }
-// });
-
-//delete data
-
-//Documentation
-
-redis.zadd("sortedSet", 1, "one", 2, "dos", 4, "quatro", 3, "three");
-redis.zrange("sortedSet", 0, 2, "WITHSCORES").then((elements) => {
-  // ["one", "1", "dos", "2", "three", "3"] as if the command was `redis> ZRANGE sortedSet 0 2 WITHSCORES`
-  console.log(elements);
-});
-
-// All arguments are passed directly to the redis server,
-// so technically ioredis supports all Redis commands.
-// The format is: redis[SOME_REDIS_COMMAND_IN_LOWERCASE](ARGUMENTS_ARE_JOINED_INTO_COMMAND_STRING)
-// so the following statement is equivalent to the CLI: `redis> SET mykey hello EX 10`
-redis.set("mykey", "hello", "EX", 10);
 
 server.listen(port, () => {
   console.log("listening on: " + port);
