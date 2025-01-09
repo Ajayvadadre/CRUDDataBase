@@ -35,7 +35,7 @@ server.post("/bulkdata", async (req, res) => {
       name: randFullName(),
       password: randPassword(),
       Id: randUuid(),
-      Time: randTimeZone()
+      Time: randTimeZone(),
     };
     bulkData.push({ index: { _index: "ajay", _id: index } });
     console.log(bulkData);
