@@ -3,18 +3,8 @@ const dotenv = require("dotenv");
 const { v4: uuidv4 } = require("uuid");
 const { MongoClient } = require("mongodb");
 dotenv.config();
-const { SimpleFaker, faker, Randomiser } = require("@faker-js/faker");
-let myData = new SimpleFaker();
-const {
-  randEmail,
-  randFullName,
-  randPassword,
-  randUuid,
-  randTimeZone,
-  randBetweenDate,
-} = require("@ngneat/falso");
 const server = restify.createServer();
-const port = process.env.PORT;
+const port = process.env.MONGOPORT;
 const url = process.env.URL;
 const collectionName = process.env.COLLECTION;
 const client = new MongoClient(url);
@@ -36,36 +26,15 @@ server.get("/", (req, res, next) => {
   next();
 });
 
-//Multidata creator
-let largeData = [];
-const insertMultiData = () => {
-  let mainData;
-  let dataCreator = () => {
-    for (let index = 0; index < 500000; index++) {
-      mainData = myData.helpers.arrayElement([
-        "marketing",
-        "sales",
-        "insurance",
-      ]);
-
-      largeData.push({
-        campaign: mainData,
-        fullname: randFullName(),
-        password: randPassword(),
-        login: Date.now(),
-        logout: Date.now() + 200000,
-      });
-    }
-  };
-  dataCreator();
-};
-// insertMultiData();
 
 //Insert multiData
 server.post("/mongo/multiData", async (req, res) => {
-  console.log(largeData);
+  const data = req.body;
+  console.log("mongopush error:");
+  console.log(data);
+  // console.log(largeData);
   try {
-    let uploadData = (await collection).insertMany(largeData);
+    let uploadData = (await collection).insertMany(data);
     console.log(uploadData);
     res.send("uploadData");
   } catch (error) {
@@ -134,8 +103,8 @@ server.get("/mongo/getsumdata", async (req, res) => {
           $group: {
             _id: "$campaign",
             user_count: { $sum: 1 },
-            min_login: { $min: {$toDate: ['$login']} },
-            max_logout: { $max: {$toDate: ['$logout']} },
+            min_login: { $min: { $toDate: ["$login"] } },
+            max_logout: { $max: { $toDate: ["$logout"] } },
           },
         },
         {
@@ -169,64 +138,31 @@ server.get("/mongo/getsumdata", async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-    res.send("AgriData error")
+    res.send("AgriData error");
   }
 });
 
-async function run() {
+//Get data from mySQl and insert in mongoDb
+server.get("/mongo/getsqldata", async (req, res) => {
+  const sqlUrl = "http://localhost:3000/mySql/data/mysql_userdata";
   try {
-    await client.connect();
-    const db = client.db("mydatabase");
-
-    // Execute the pipeline
-    const result = await db
-      .collection("mysqluserdata")
-      .aggregate([
-        {
-          $group: {
-            _id: "$campaign",
-            user_count: { $sum: 1 },
-            min_login: { $min: "$login" },
-            max_logout: { $max: "$logout" },
-          },
-        },
-        {
-          $project: {
-            _id: 0,
-            campaign: "$_id",
-            user_count: 1,
-            min_login: {
-              $dateToString: {
-                format: "%Y-%m-%d %H:%M:%S",
-                date: "$min_login",
-              },
-            },
-            max_logout: {
-              $dateToString: {
-                format: "%Y-%m-%d %H:%M:%S",
-                date: "$max_logout",
-              },
-            },
-          },
-        },
-      ])
-      .toArray();
-
-    // Print the summary report
-    console.log("Summary Report:");
-    result.forEach((row) => {
-      console.log(`Campaign: ${row.campaign}`);
-      console.log(`User Count: ${row.user_count}`);
-      console.log(`Min Login: ${row.min_login}`);
-      console.log(`Max Logout: ${row.max_logout}`);
-      console.log("");
-    });
-
-    // Close the connection
-    client.close();
+    const mySqlData = await fetch(sqlUrl);
+    const data = await mySqlData.json();
+    console.log("Data fetch successfully :");
+    //Push sql data in mongoDb
+    fetch("http://localhost:3001/mongo/multiData", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+      .then((res) => res.json())
+      .then((data) => console.log("data droped"))
+      .catch((err) => console.log(err));
+    res.send("fetch data successfully");
   } catch (error) {
-    console.error(error);
+    console.log(error);
+    res.send(error);
   }
-}
-
-// run();
+});

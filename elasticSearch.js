@@ -1,19 +1,10 @@
 const { Client } = require("@elastic/elasticsearch");
 const client = new Client({ node: "http://192.168.0.128:9200/" });
 const restify = require("restify");
-const {
-  randEmail,
-  randFullName,
-  randPassword,
-  randUuid,
-  randTimeZone,
-} = require("@ngneat/falso");
-
 const dotenv = require("dotenv");
-// const faker = require("faker-js");
 dotenv.config();
 const server = restify.createServer();
-const port = process.env.PORT;
+const port = process.env.ELASTICPORT;
 server.use(restify.plugins.bodyParser());
 
 server.listen(port, () => {
@@ -27,20 +18,21 @@ server.listen(port, () => {
 
 // createIndex("ajay");
 
-server.post("/bulkdata", async (req, res) => {
-  const bulkData = [];
-  for (let index = 0; index < 40; index++) {
-    const body = {
-      email: randEmail(),
-      name: randFullName(),
-      password: randPassword(),
-      Id: randUuid(),
-      Time: randTimeZone(),
-    };
-    bulkData.push({ index: { _index: "ajay", _id: index } });
-    console.log(bulkData);
-    bulkData.push(body);
-  }
+server.post("/elasticsearch/bulkdata", async (req, res) => {
+  // const bulkData = [];
+  // for (let index = 0; index < 40; index++) {
+  //   const body = {
+  //     email: randEmail(),
+  //     name: randFullName(),
+  //     password: randPassword(),
+  //     Id: randUuid(),
+  //     Time: randTimeZone(),
+  //   };
+  //   bulkData.push({ index: { _index: "ajay", _id: index } });
+  //   console.log(bulkData);
+  //   bulkData.push(body);
+  // }
+  const bulkData = req.body;
   try {
     const response = await client.bulk({ body: bulkData });
     // console.log(response);
