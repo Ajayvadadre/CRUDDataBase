@@ -2,6 +2,8 @@ const restify = require("restify");
 const dotenv = require("dotenv");
 const { v4: uuidv4 } = require("uuid");
 const { MongoClient } = require("mongodb");
+const utils = require("./utils");
+
 dotenv.config();
 const server = restify.createServer();
 const port = process.env.MONGOPORT;
@@ -26,16 +28,17 @@ server.get("/", (req, res, next) => {
   next();
 });
 
-
 //Insert multiData
 server.post("/mongo/multiData", async (req, res) => {
+  let collection = await main();
+  const insertBigData = utils.insertMultiHrData();
   const data = req.body;
-  console.log("mongopush error:");
-  console.log(data);
-  // console.log(largeData);
+  console.log(insertBigData);
   try {
-    let uploadData = (await collection).insertMany(data);
+    console.log("Data uploaded successfully");
+    let uploadData = await collection.insertMany(insertBigData);
     console.log(uploadData);
+    console.log("Data uploaded successfully");
     res.send("uploadData");
   } catch (error) {
     res.send(error);
@@ -141,6 +144,129 @@ server.get("/mongo/getsumdata", async (req, res) => {
     res.send("AgriData error");
   }
 });
+
+//Get aggrigate data 2
+
+// server.get("/mongo/summarydata", async (req, res) => {
+//   console.log('summardata called');
+//   try {
+//     let collection = await main();
+//     const agriData = await collection.aggregate([
+//       {
+//         "$group": {
+//           "_id": {
+//             "hour": { "$hour": "$datetime" },
+//             "type": "$type",
+//             "campaignName": "$campaignName",
+//             "processnName": "$processnName"
+//           },
+//           "call_count": { "$sum": 1 },
+//           "total_duration": { "$sum": "$duration" },
+//           "total_hold": { "$sum": "$hold" },
+//           "total_mute": { "$sum": "$mute" },
+//           "total_ringing": { "$sum": "$ringing" },
+//           "total_transfer": { "$sum": "$transfer" },
+//           "total_conference": { "$sum": "$conference" },
+//           "unique_calls": { "$addToSet": "$reference_uuid" }
+//         }
+//       },
+//       {
+//         "$project": {
+//           "hour": "$_id.hour",
+//           "type": "$_id.type",
+//           "campaign_name": "$_id.campaign_name",
+//           "process_name": "$_id .process_name",
+//           "call_count": 1,
+//           "total_duration": 1,
+//           "total_hold": 1,
+//           "total_mute": 1,
+//           "total_ringing": 1,
+//           "total_transfer": 1,
+//           "total_conference": 1,
+//           "unique_calls": { "$size": "$unique_calls" }
+//         }
+//       },
+//       {
+//         "$sort": { 
+//           "hour": 1
+//         }
+//       }
+//     ]).toArray();
+//     // console.log(agriData)
+//     return res.send(agriData);
+//   } catch (error) {
+//     console.log(error);
+//     res.send("AgriData error");
+//   }
+// });
+
+
+server.get("/mongo/summarydata", async (req, res) => {
+  console.log('summardata called');
+  try {
+    let collection = await main();
+    const page = req.query.page || 1;
+    const perPage = req.query.perPage || 10;
+    const skip = (page - 1) * perPage;
+
+    const [agriData] = await collection.aggregate([
+      {
+        "$group": {
+          "_id": {
+            "hour": { "$hour": { "$toDate": "$datetime" } },
+            "type": "$type",
+            "campaignName": "$campaignName",
+            "processnName": "$processnName"
+          },
+          "call_count": { "$sum": 1 },
+          "total_duration": { "$sum": "$duration" },
+          "total_hold": { "$sum": "$hold" },
+          "total_mute": { "$sum": "$mute" },
+          "total_ringing": { "$sum": "$ringing" },
+          "total_transfer": { "$sum": "$transfer" },
+          "total_conference": { "$sum": "$conference" },
+          "unique_calls": { "$addToSet": "$referenceUuid" }
+        }
+      },
+      {
+        "$project": {
+          "hour": "$_id.hour",
+          "type": "$_id.type",
+          "campaignName": "$_id.campaign_name",
+          "processnName": "$_id .process_name",
+          "call_count": 1,
+          "total_duration": 1,
+          "total_hold": 1,
+          "total_mute": 1,
+          "total_ringing": 1,
+          "total_transfer": 1,
+          "total_conference": 1,
+          "unique_calls": { "$size": "$unique_calls" }
+        }
+      },
+      {
+        "$sort": { 
+          "hour": 1
+        }
+      },
+      {
+        "$skip": skip
+      },
+      {
+        "$limit": perPage
+      }
+    ]).toArray();
+    console.log(agriData)
+    return res.send(agriData);
+  } catch (error) {
+    console.log('mongo summary error: ')
+    console.log(error);
+    res.send("AgriData error");
+  }
+});
+
+
+
 
 //Get data from mySQl and insert in mongoDb
 server.get("/mongo/getsqldata", async (req, res) => {

@@ -28,11 +28,49 @@
 
 
 
+[
+  (datetime = Date.now()),
+  (calltype = calltype),
+  (disposetype = disposeType),
+  (disposename = disposeName),
+  (duration = Date.now() + 3200),
+  (agentname = randFullName()),
+  (campaignName = campaignData),
+  (processnName = processData),
+  (leadset = randUuid()),
+  (referenceUuid = randUuid()),
+  (customerUuid = randUuid()),
+  (hold = hold),
+  (mute = mute),
+  (ringing = ringing),
+  (transfer = transfer),
+  (conference = conference),
+  (call = call),
+  (disposetime = Date.now() + 70000),
+];
 
 
 
-
-
+// {
+//   datetime: Date.now(),
+//   calltype: calltype,
+//   disposetype: disposeType,
+//   disposename: disposeName,
+//   duration: Date.now() + 3200,
+//   agentname: randFullName(),
+//   campaignName: campaignData,
+//   processnName: processData,
+//   leadset: randUuid(),
+//   referenceUuid: randUuid(),
+//   customerUuid: randUuid(),
+//   hold: hold,
+//   mute: mute,
+//   ringing: ringing,
+//   transfer: transfer,
+//   conference: conference,
+//   call: call,
+//   disposetime: Date.now() + 70000,
+// }
 
 
 
@@ -160,3 +198,144 @@ const insertMultiHrData = () => {
 module.exports = {
   insertMultiHrData
 }
+
+
+
+
+
+
+
+
+
+
+
+
+INSERT INTO curd.logger_report (date_time, type, dispose_type, dispose_name , duration, agent_name, campaign, process_name, leadset, refrence_uuid, coustomer_uuid	, hold, mute, ringing, transfer, conference, callTime, dispose_time) VALUES ?
+
+
+
+
+
+array(10) { [0]=> array(10) { ["_id"]=> array(3) { ["hour"]=> int(12) ["campaignName"]=> string(5) "sales" ["processnName"]=> string(3) "Web" } ["call_count"]=> int(3) ["total_duration"]=> int(5210319143852) ["total_hold"]=> int(0) ["total_mute"]=> int(0) ["total_ringing"]=> int(9) ["total_transfer"]=> int(0) ["total_conference"]=> int(0) ["hour"]=> int(12) ["unique_calls"]=> int(3) }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  let largeData = [];
+  let mysqlData = [];
+  let campaignData;
+  let calltype;
+  let disposeType;
+  let disposeName;
+
+  let dataCreator = () => {
+    for (let index = 0; index < 10; index++) {
+      campaignData = myData.helpers.arrayElement([
+        "marketing",
+        "sales",
+        "insurance",
+      ]);
+      processData = myData.helpers.arrayElement([
+        "Auto",
+        "Inbound",
+        "OnDemand",
+        "Web",
+      ]);
+      calltype = myData.helpers.arrayElement([
+        "dispose",
+        "missed",
+        "autofailed",
+        "autodrop",
+      ]);
+      var disposetime = Math.floor(Math.random() * 10) + 1;
+      const workingHours = Math.floor(
+        Math.random() * (70000000 - 3600000) + 2000000
+      );
+
+      if (calltype == "missed") {
+        disposeName = "agent not found";
+      } else if (calltype == "autoFail" || calltype == "autoDrop") {
+        disposeName = faker.helpers.arrayElement([
+          "busy",
+          "decline",
+          "does not exist",
+          "not acceptable",
+        ]);
+      } else {
+        disposeName = faker.helpers.arrayElement([
+          "follow up",
+          "do not call",
+          "external transfer",
+        ]);
+        if (disposeName == "follow up") {
+          disposeType = "callback";
+        } else if (disposeName == "do not call") {
+          disposeType = "dnc";
+        } else {
+          disposeType = "etx";
+        }
+      }
+      let ringing = 0;
+      let transfer = 0;
+      let call = 0;
+      let mute = 0;
+      let conference = 0;
+      let hold = 0;
+      var duration = ringing + transfer + call + mute + conference + hold;
+
+      if (
+        calltype == "missed" ||
+        calltype == "autoFail" ||
+        calltype == "autoDrop"
+      ) {
+        ringing = faker.number.int({ min: 1, max: 10 });
+      } else if (calltype == "disposed") {
+        const variables = ["transfer", "mute", "conference", "hold"];
+        const selectedVariables = faker.helpers.arrayElements(variables, {
+          min: 2,
+          max: 3,
+        });
+
+        selectedVariables.forEach((variable) => {
+          call = faker.number.int({ min: 1, max: 300 });
+          switch (variable) {
+            case "transfer":
+              transfer = faker.number.int({ min: 1, max: 300 });
+              break;
+            case "mute":
+              mute = faker.number.int({ min: 1, max: 300 });
+              break;
+            case "conference":
+              conference = faker.number.int({ min: 1, max: 300 });
+              break;
+            case "hold":
+              hold = faker.number.int({ min: 1, max: 300 });
+              break;
+          }
+        });
+      }

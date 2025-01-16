@@ -1,7 +1,8 @@
 const { Client } = require("@elastic/elasticsearch");
-const client = new Client({ node: "http://192.168.0.128:9200/" });
+const client = new Client({ node: "http://192.168.0.133:9200/" });
 const restify = require("restify");
 const dotenv = require("dotenv");
+const utils = require("./utils");
 dotenv.config();
 const server = restify.createServer();
 const port = process.env.ELASTICPORT;
@@ -19,22 +20,9 @@ server.listen(port, () => {
 // createIndex("ajay");
 
 server.post("/elasticsearch/bulkdata", async (req, res) => {
-  // const bulkData = [];
-  // for (let index = 0; index < 40; index++) {
-  //   const body = {
-  //     email: randEmail(),
-  //     name: randFullName(),
-  //     password: randPassword(),
-  //     Id: randUuid(),
-  //     Time: randTimeZone(),
-  //   };
-  //   bulkData.push({ index: { _index: "ajay", _id: index } });
-  //   console.log(bulkData);
-  //   bulkData.push(body);
-  // }
-  const bulkData = req.body;
+  const insertBigData = await utils.insertMultiHrData();
   try {
-    const response = await client.bulk({ body: bulkData });
+    const response = await client.bulk({ body: insertBigData });
     // console.log(response);
     res.send("Bulk data created successfully");
   } catch (error) {
@@ -114,5 +102,136 @@ server.del("/elasticsearch/delete/:indexname/:id", async (req, res) => {
   } catch (error) {
     res.send("Delete data error: " + error);
     console.log(error);
+  }
+});
+
+//get summary data
+// server.get("/elastic/summary", async (req, res) => {
+//   try {
+//     const result = await Eclient.search({
+//       index: "akash",
+//       body: {
+//         aggs: {
+//           by_hour: {
+//             date_histogram: {
+//               field: "date_time",
+//               fixed_interval: "1h",
+//             },
+//             aggs: {
+//               by_type: {
+//                 terms: {
+//                   field: "type.keyword",
+//                 },
+//                 aggs: {
+//                   campaign: {
+//                     terms: {
+//                       field: "campaign.keyword",
+//                     },
+//                   },
+//                   process_name: {
+//                     terms: {
+//                       field: "process_name.keyword",
+//                     },
+//                   },
+//                   call_count: {
+//                     value_count: {
+//                       field: "date_time",
+//                     },
+//                   },
+//                   total_duration: {
+//                     sum: { field: "duration" },
+//                   },
+//                   total_hold: {
+//                     sum: { field: "hold" },
+//                   },
+//                   total_mute: {
+//                     sum: { field: "mute" },
+//                   },
+//                   total_ringing: {
+//                     sum: { field: "ringing" },
+//                   },
+//                   total_transfer: {
+//                     sum: { field: "transfer" },
+//                   },
+//                   total_conference: {
+//                     sum: { field: "conference" },
+//                   },
+//                   unique_calls: {
+//                     terms: {
+//                       field: "refrence_uuid.keyword",
+//                     },
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//         },
+//         size: 0,
+//         properties: { refrence_uuid: { type: "keyword", fielddata: true } },
+//       },
+//     });
+//     res.send(result);
+//   } catch (error) {
+//     console.error(error);
+//     res.send(error);
+//     // res.status(500).send({ error: error.message });
+//   }
+// });
+
+server.get("/elastic/summary", async (req, res) => {
+  try {
+    const result = await client.search({
+      index: "ajay",
+      body: {
+        query: {
+          match_all: {},
+        },
+        size: 0,
+        aggs: {
+          by_hour: {
+            terms: {
+              field: "datetime",
+              script: {
+                source: "doc['datetime'].date.hourOfDay",
+              },
+            },
+            aggs: {
+              by_type: {
+                terms: {
+                  field: "type",
+                },
+                aggs: {
+                  metrics: {
+                    multi_terms: {
+                      terms: [
+                        { field: "campaignName.keyword" },
+                        { field: "processName" },
+                      ],
+                    },
+                    aggs: {
+                      unique_calls: {
+                        terms: {
+                          field: "referenceUuid.keyword",
+                        },
+                      },
+                      total_duration: { sum: { field: "duration" } },
+                      total_hold: { sum: { field: "hold" } },
+                      total_mute: { sum: { field: "mute" } },
+                      total_ringing: { sum: { field: "ringing" } },
+                      total_transfer: { sum: { field: "transfer" } },
+                      total_conference: { sum: { field: "conference" } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.send(err);
   }
 });

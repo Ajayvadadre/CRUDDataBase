@@ -1,3 +1,10 @@
+let largeData = [];
+let mysqlData = [];
+let campaignData;
+let calltype;
+let disposeType;
+let disposeName;
+
 const util = require("util");
 const { SimpleFaker, faker, Randomiser } = require("@faker-js/faker");
 let myData = new SimpleFaker();
@@ -12,20 +19,8 @@ const {
 const moment = require("moment");
 
 const insertMultiHrData = () => {
-  let largeData = [];
-  let campaignData;
-  let calltype;
-  let disposeType;
-  let disposeName;
-  let ringing = 0;
-  let transfer = 0;
-  let call = 0;
-  let mute = 0;
-  let conference = 0;
-  let hold = 0;
-
   let dataCreator = () => {
-    for (let index = 0; index < 50; index++) {
+    for (let index = 0; index < 100000; index++) {
       campaignData = myData.helpers.arrayElement([
         "marketing",
         "sales",
@@ -44,7 +39,6 @@ const insertMultiHrData = () => {
         "autodrop",
       ]);
       var disposetime = Math.floor(Math.random() * 10) + 1;
-      var duration = ringing + transfer + call + mute + conference + hold;
       const workingHours = Math.floor(
         Math.random() * (70000000 - 3600000) + 2000000
       );
@@ -72,7 +66,13 @@ const insertMultiHrData = () => {
           disposeType = "etx";
         }
       }
-
+      let ringing = 0;
+      let transfer = 0;
+      let call = 0;
+      let mute = 0;
+      let conference = 0;
+      let hold = 0;
+      var duration = ringing + transfer + call + mute + conference + hold;
 
       if (
         calltype == "missed" ||
@@ -86,7 +86,7 @@ const insertMultiHrData = () => {
           min: 2,
           max: 3,
         });
-  
+
         selectedVariables.forEach((variable) => {
           call = faker.number.int({ min: 1, max: 300 });
           switch (variable) {
@@ -104,30 +104,65 @@ const insertMultiHrData = () => {
               break;
           }
         });
+      }
 
       //-------- adding all data--------
-      largeData.push([
-        (datetime = Date.now()),
-        (calltype = calltype),
-        (disposetype = disposeType),
-        (disposename = disposeName),
-        (duration = Date.now() + 3200),
-        (agentname = randFullName()),
-        (campaignName = campaignData),
-        (processnName = processData),
-        (leadset = randUuid()),
-        (referenceUuid = randUuid()),
-        (customerUuid = randUuid()),
-        (hold = hold),
-        (mute =mute),
-        (ringing = ringing),
-        (transfer =transfer),
-        (conference =conference),
-        (call =call),
-        (disposetime = Date.now() + 70000),
-      ]);
+      // largeData.push([
+      //   getRandomTimeOfDay(),
+      //   calltype,
+      //   disposeType,
+      //   disposeName,
+      //   Date.now() + 3200,
+      //   randFullName(),
+      //   campaignData,
+      //   processData,
+      //   randUuid(),
+      //   randUuid(),
+      //   randUuid(),
+      //   hold,
+      //   mute,
+      //   ringing,
+      //   transfer,
+      //   conference,
+      //   call,
+      //   Date.now() + 70000
+      // ]);
+
+      largeData.push({
+        index: { _index: "ajay" },
+        datetime: getRandomTimeOfDay(),
+        calltype: calltype,
+        disposetype: disposeType,
+        disposename: disposeName,
+        duration: Date.now() + 3200,
+        agentname: randFullName(),
+        campaignName: campaignData,
+        processnName: processData,
+        leadset: randUuid(),
+        referenceUuid: randUuid(),
+        customerUuid: randUuid(),
+        hold: hold,
+        mute: mute,
+        ringing: ringing,
+        transfer: transfer,
+        conference: conference,
+        call: call,
+        disposetime: Date.now() + 70000,
+      });
     }
   };
+
+  function getRandomTimeOfDay() {
+    const startOfDay = new Date();
+    startOfDay.setHours(9, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(18, 0, 0, 0);
+    const randomTimestamp = new Date(
+      startOfDay.getTime() +
+        Math.random() * (endOfDay.getTime() - startOfDay.getTime())
+    );
+    return randomTimestamp;
+  }
   const data = dataCreator();
   return largeData;
 
@@ -146,13 +181,8 @@ const insertMultiHrData = () => {
   // let chunkData = 20;
   // for (let i = 0; i < largeData.length; i = i + chunkData) {
   //   tempData = largeData.slice(i, chunkData);
-  // }
 };
 
 module.exports = {
   insertMultiHrData,
 };
-
-// disposeType = myData.helpers.arrayElement(["Callback", "DNC", "etx"]);
-// disposeName = myData.helpers.arrayElement(["Followup", "Reasons", "etx"]);
-// disposeType = myData.helpers.arrayElement(["callback", "dnc", "etx"]);
