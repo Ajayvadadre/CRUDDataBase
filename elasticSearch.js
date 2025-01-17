@@ -21,6 +21,7 @@ server.listen(port, () => {
 
 server.post("/elasticsearch/bulkdata", async (req, res) => {
   const insertBigData = await utils.insertMultiHrData();
+  console.log(insertBigData);
   try {
     const response = await client.bulk({ body: insertBigData });
     // console.log(response);
@@ -45,6 +46,22 @@ server.get("/elasticsearch/get/:indexName", async (req, res) => {
     });
     console.log("Get data successfull of " + indexName + ", " + getData);
     res.send(getData);
+  } catch (error) {
+    res.send("Get data error :" + error);
+    console.log(error);
+  }
+});
+
+server.get("/elasticsearch/alldata", async (req, res) => {
+  try {
+    const getData = await client.search({
+      index: "ajay",
+      query: {
+        match_all: {},
+      },
+    });
+    console.log(getData)
+    res.send(getData.hits.hits.map((value) => value._source));
   } catch (error) {
     res.send("Get data error :" + error);
     console.log(error);
@@ -89,13 +106,13 @@ server.put("/elasticsearch/update/:indexname/:id", async (req, res) => {
 });
 
 // Delete data
-server.del("/elasticsearch/delete/:indexname/:id", async (req, res) => {
+server.del("/elasticsearch/delete/:indexname", async (req, res) => {
   const indexname = req.params.indexname;
+  console.log(indexname);
   const id = req.params.id;
   try {
     const deleteData = await client.delete({
-      index: indexname,
-      id: id,
+      index: "ajay",
     });
     console.log("data deleted successfully : ", deleteData);
     res.send(deleteData);
@@ -179,49 +196,57 @@ server.del("/elasticsearch/delete/:indexname/:id", async (req, res) => {
 // });
 
 server.get("/elastic/summary", async (req, res) => {
+  console.log("elastic get data called:   ");
   try {
     const result = await client.search({
       index: "ajay",
       body: {
-        query: {
-          match_all: {},
-        },
         size: 0,
         aggs: {
-          by_hour: {
-            terms: {
+          group_by_hour: {
+            date_histogram: {
               field: "datetime",
-              script: {
-                source: "doc['datetime'].date.hourOfDay",
-              },
+              calendar_interval: "1h",
             },
             aggs: {
-              by_type: {
-                terms: {
-                  field: "type",
+              total_duration: {
+                sum: {
+                  field: "duration",
                 },
-                aggs: {
-                  metrics: {
-                    multi_terms: {
-                      terms: [
-                        { field: "campaignName.keyword" },
-                        { field: "processName" },
-                      ],
-                    },
-                    aggs: {
-                      unique_calls: {
-                        terms: {
-                          field: "referenceUuid.keyword",
-                        },
-                      },
-                      total_duration: { sum: { field: "duration" } },
-                      total_hold: { sum: { field: "hold" } },
-                      total_mute: { sum: { field: "mute" } },
-                      total_ringing: { sum: { field: "ringing" } },
-                      total_transfer: { sum: { field: "transfer" } },
-                      total_conference: { sum: { field: "conference" } },
-                    },
-                  },
+              },
+              total_hold: {
+                sum: {
+                  field: "hold",
+                },
+              },
+              total_mute: {
+                sum: {
+                  field: "mute",
+                },
+              },
+              total_ringing: {
+                sum: {
+                  field: "ringing",
+                },
+              },
+              total_transfer: {
+                sum: {
+                  field: "transfer",
+                },
+              },
+              total_conference: {
+                sum: {
+                  field: "conference",
+                },
+              },
+              call_count: {
+                value_count: {
+                  field: "date_time",
+                },
+              },
+              total_onCall: {
+                sum: {
+                  field: "callTime",
                 },
               },
             },
@@ -229,6 +254,7 @@ server.get("/elastic/summary", async (req, res) => {
         },
       },
     });
+    console.log(result);
     res.send(result);
   } catch (err) {
     console.error(err);

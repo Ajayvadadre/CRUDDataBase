@@ -92,52 +92,21 @@ server.del("/mySql/delete", async (req, res) => {
 });
 
 //Summerise data for Report1
-server.get("/mySql/summeriseHrdata", (req, res, next) => {
-  let query =
-    " SELECT campaign, COUNT(*) AS user_count, AVG(login) AS avg_login, AVG(logout) AS avg_logout FROM mysqluserdata GROUP BY campaign";
-  let getSumData = connection.query(query, (err, result) => {
-    if (err) {
-      console.log(err);
-      res.send(err);
-      next();
-    }
-    let summaryData = [];
-    result.forEach((element) => {
-      summaryData.push({
-        campaign: element.campaign,
-        user_count: element.user_count,
-        avg_login: moment(element.avg_login).format("LTS"),
-        avg_logout: moment(element.avg_logout).format("LTS"),
-        workinghour:
-          (element.avg_logout - element.avg_login) / 60 / 60 / 1000 + "hrs",
-      });
-    });
-    console.log(summaryData);
-    res.send(summaryData);
-    next();
-  });
+server.get("/mySql/AllData", async (req, res) => {
+  let query = " SELECT * FROM mysql_userdata LIMIT 15";
+    let [getAllData] = await connection.query(query);
+  console.log(getAllData);
+  res.send(getAllData);
 });
 
 //Summerise data for Report2
 server.get("/mySql/summerisedata", async (req, res) => {
   let query =
-    "SELECT HOUR(datetime) AS hour, type, campaignName, processName, COUNT(*) AS call_count, SUM(duration) AS total_duration, SUM(hold) AS total_hold, SUM(mute) AS total_mute, SUM(ringing) AS total_ringing, SUM(transfer) AS total_transfer, SUM(conference) AS total_conference, COUNT(DISTINCT referenceUuid) AS unique_calls FROM mysql_userdata GROUP BY HOUR(datetime), type ORDER BY hour ASC;";
-  let getSumData = await connection.query(query);
+    "SELECT HOUR(datetime) AS hour, type, campaignName, processName, COUNT(*) AS call_count, SUM(duration) AS total_duration, SUM(hold) AS total_hold, SUM(mute) AS total_mute, SUM(ringing) AS total_ringing, SUM(transfer) AS total_transfer, SUM(conference) AS total_conference, COUNT(DISTINCT referenceUuid) AS unique_calls FROM mysql_userdata GROUP BY HOUR(datetime) ORDER BY hour ASC;";
+  let [getSumData] = await connection.query(query);
   res.send(getSumData);
   console.log("resposnse send ");
-  // let summaryData = [];
-  // getSumData.forEach((element) => {
-  //   summaryData.push({
-  //     campaign: element.campaign,
-  //     user_count: element.user_count,
-  //     avg_login: moment(element.avg_login).format("LTS"),
-  //     avg_logout: moment(element.avg_logout).format("LTS"),
-  //     workinghour:
-  //       (element.avg_logout - element.avg_login) / 60 / 60 / 1000 + "hrs",
-  //   });
-  // });
   console.log(summaryData);
-  res.send(result);
 });
 
 // //Insert Big data
@@ -160,7 +129,7 @@ server.get("/mySql/summerisedata", async (req, res) => {
 server.post("/mysql/postbigdata", async (req, res) => {
   const bigData = utils.insertMultiHrData();
   const data = req.body;
-  console.log(data);
+  console.log(bigData);
   var sqlQuery = `INSERT INTO mysql_userdata (datetime, type, disposetype, disposename, duration, agentname, campaignName, processName, leadset, referenceUuid, customerUuid, hold, mute, ringing, transfer, conference, oncall, disposetime)
 VALUES ?`;
   try {

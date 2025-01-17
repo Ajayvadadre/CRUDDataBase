@@ -339,3 +339,84 @@ array(10) { [0]=> array(10) { ["_id"]=> array(3) { ["hour"]=> int(12) ["campaign
           }
         });
       }
+
+
+
+
+
+
+//Bulk data insert function 
+
+      async function bulkDataInsert(){ 
+    
+        for (let i = 0; i < 100000; i++) { 
+          let ringing = 0;
+          let transfer = 0;
+          let call = 0;
+          let mute = 0;
+          let conference = 0;
+          let hold = 0;
+          let duration = 0;
+            var datetime= getRandomTimeOfDay();
+            let callType = faker.helpers.arrayElement(['disposed', 'missed', 'autoFail', 'autoDrop']);
+            let disposeName;
+            let disposeType;
+                
+            if (callType == 'missed') {
+              disposeName = 'agent not found';
+            } else if (callType == "autoFail" || callType == "autoDrop") {
+              disposeName = faker.helpers.arrayElement(["busy", "decline", "does not exist", "not acceptable"]);
+            } else {
+              disposeName = faker.helpers.arrayElement(['follow up', 'do not call', 'external transfer']);
+              if (disposeName == 'follow up') {
+                disposeType = 'callback';
+              } else if (disposeName == 'do not call') {
+                disposeType = 'dnc';
+              } else {
+                disposeType = 'etx';
+              }
+            }
+            
+            var agents=faker.helpers.arrayElement(['pradeep','panda', 'atul', 'sahil', 'rohit', 'akash', 'anupam', 'ajay', 'ayush',])
+            var campaign=faker.helpers.arrayElement(['Insuarance', 'sales', 'marketing', 'finance'])
+            var process= faker.helpers.arrayElement(['process1', 'process2', 'process3', 'process4', 'process5'])
+            var leadid= Math.floor(Math.random() * 10)+1;
+            var referenceuuid= faker.string.uuid();
+            var customeruuid= faker.string.uuid();
+            
+         
+            
+            if (callType == 'missed' || callType == 'autoFail' || callType == 'autoDrop' ) {
+              ringing = faker.number.int({ min: 1, max: 10 });
+              duration = ringing+transfer+call+mute+conference+hold;
+            } else if (callType == 'disposed') {
+              const variables = ['transfer', 'mute', 'conference', 'hold'];
+              const selectedVariables = faker.helpers.arrayElements(variables, { min: 2, max: 3 });
+              var disposeTime=Math.floor(Math.random() * 10)+1;
+              selectedVariables.forEach(variable => {
+                call = faker.number.int({ min: 1, max: 300 });
+                switch (variable) {
+                  case 'transfer':
+                    transfer = faker.number.int({ min: 1, max: 300 });
+                    break;
+                  case 'mute':
+                    mute = faker.number.int({ min: 1, max: 300 });
+                    break;
+                  case 'conference':
+                    conference = faker.number.int({ min: 1, max: 300 });
+                    break;
+                  case 'hold':
+                    hold = faker.number.int({ min: 1, max: 300 });
+                    break;
+                }
+            });
+          
+          duration = ringing+transfer+call+mute+conference+hold;
+          
+        }
+         bulkDatam.push({date_time: datetime, type : callType, dispose_type:disposeType, dispose_name: disposeName , duration:duration, agent_name:agents, campaign:campaign, process_name:process, leadset:leadid, refrence_uuid:referenceuuid, coustomer_uuid:customeruuid	, hold: hold, mute:mute, ringing:ringing, transfer:transfer, conference:conference, callTime:call, dispose_time:disposeTime})
+         bulkData.push([datetime,callType, disposeType, disposeName, duration, agents, campaign, process, leadid, referenceuuid, customeruuid, hold, mute, ringing, transfer, conference, call, disposeTime]);
+         bulkDataE.push({ index: { _index: 'akash' } });
+         bulkDataE.push({date_time: datetime, type : callType, dispose_type:disposeType, dispose_name: disposeName , duration:duration, agent_name:agents, campaign:campaign, process_name:process, leadset:leadid, refrence_uuid:referenceuuid, coustomer_uuid:customeruuid	, hold: hold, mute:mute, ringing:ringing, transfer:transfer, conference:conference, callTime:call, dispose_time:disposeTime})
+       }
+    }
