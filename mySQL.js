@@ -91,10 +91,10 @@ server.del("/mySql/delete", async (req, res) => {
   }
 });
 
-//Summerise data for Report1
+//Overall data
 server.get("/mySql/AllData", async (req, res) => {
   let query = " SELECT * FROM mysql_userdata LIMIT 15";
-    let [getAllData] = await connection.query(query);
+  let [getAllData] = await connection.query(query);
   console.log(getAllData);
   res.send(getAllData);
 });
@@ -141,7 +141,6 @@ VALUES ?`;
   console.log("Added data successfully: ");
   res.send("data Dumped succssfully in mysql");
 });
-
 //server listen
 server.listen(port, () => {
   console.log("listening on: " + port);

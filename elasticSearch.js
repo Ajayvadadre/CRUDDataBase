@@ -12,6 +12,7 @@ server.listen(port, () => {
   console.log("listening on: " + port);
 });
 
+//Index creator 
 // const createIndex = async (indexName) => {
 //   await client.indices.create({ index: indexName });
 //   console.log("Index created");
@@ -20,9 +21,9 @@ server.listen(port, () => {
 // createIndex("ajay");
 
 server.post("/elasticsearch/bulkdata", async (req, res) => {
-  const insertBigData = await utils.insertMultiHrData();
+  const insertBigData = await utils.bulkDataInsert();
   console.log(insertBigData);
-  try {
+  try { 
     const response = await client.bulk({ body: insertBigData });
     // console.log(response);
     res.send("Bulk data created successfully");
@@ -32,7 +33,7 @@ server.post("/elasticsearch/bulkdata", async (req, res) => {
   }
 });
 
-// // Get data
+// Get data
 server.get("/elasticsearch/get/:indexName", async (req, res) => {
   const indexName = req.params.indexName;
   //   const id = req.params.id;
@@ -52,6 +53,7 @@ server.get("/elasticsearch/get/:indexName", async (req, res) => {
   }
 });
 
+// Get all data
 server.get("/elasticsearch/alldata", async (req, res) => {
   try {
     const getData = await client.search({
@@ -121,6 +123,75 @@ server.del("/elasticsearch/delete/:indexname", async (req, res) => {
     console.log(error);
   }
 });
+
+server.get("/elastic/summary", async (req, res) => {
+  console.log("elastic get data called:   ");
+  try {
+    const result = await client.search({
+      index: "ajay",
+      body: {
+        size: 0,
+        aggs: {
+          group_by_hour: {
+            date_histogram: {
+              field: "datetime",
+              calendar_interval: "1h",
+            },
+            aggs: {
+              total_duration: {
+                sum: {
+                  field: "duration",
+                },
+              },
+              total_hold: {
+                sum: {
+                  field: "hold",
+                },
+              },
+              total_mute: {
+                sum: {
+                  field: "mute",
+                },
+              },
+              total_ringing: {
+                sum: {
+                  field: "ringing",
+                },
+              },
+              total_transfer: {
+                sum: {
+                  field: "transfer",
+                },
+              },
+              total_conference: {
+                sum: {
+                  field: "conference",
+                },
+              },
+              call_count: {
+                value_count: {
+                  field: "date_time",
+                },
+              },
+              total_onCall: {
+                sum: {
+                  field: "callTime",
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    console.log(result);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.send(err);
+  }
+});
+
 
 //get summary data
 // server.get("/elastic/summary", async (req, res) => {
@@ -195,69 +266,3 @@ server.del("/elasticsearch/delete/:indexname", async (req, res) => {
 //   }
 // });
 
-server.get("/elastic/summary", async (req, res) => {
-  console.log("elastic get data called:   ");
-  try {
-    const result = await client.search({
-      index: "ajay",
-      body: {
-        size: 0,
-        aggs: {
-          group_by_hour: {
-            date_histogram: {
-              field: "datetime",
-              calendar_interval: "1h",
-            },
-            aggs: {
-              total_duration: {
-                sum: {
-                  field: "duration",
-                },
-              },
-              total_hold: {
-                sum: {
-                  field: "hold",
-                },
-              },
-              total_mute: {
-                sum: {
-                  field: "mute",
-                },
-              },
-              total_ringing: {
-                sum: {
-                  field: "ringing",
-                },
-              },
-              total_transfer: {
-                sum: {
-                  field: "transfer",
-                },
-              },
-              total_conference: {
-                sum: {
-                  field: "conference",
-                },
-              },
-              call_count: {
-                value_count: {
-                  field: "date_time",
-                },
-              },
-              total_onCall: {
-                sum: {
-                  field: "callTime",
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-    console.log(result);
-    res.send(result);
-  } catch (err) {
-    console.error(err);
-    res.send(err);
-  }
-});

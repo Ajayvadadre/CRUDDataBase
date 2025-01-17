@@ -2,6 +2,7 @@ let largeData = [];
 let mysqlData = [];
 let bulkData = [];
 let bulkDatam = [];
+let bulkDataE = [];
 let campaignData;
 let calltype;
 let disposeType;
@@ -310,26 +311,26 @@ async function bulkDataInsert() {
       duration = ringing + transfer + call + mute + conference + hold;
     }
     // Mongodb database
-    bulkDatam.push({
-      datetime: datetime  ,
-      calltype: callType,
-      disposetype: disposeType,
-      disposename: disposeName,
-      duration: duration,
-      agentname: agents,
-      campaignName: campaign,
-      processName: process,
-      leadset: leadid,
-      refrence_uuid: referenceuuid,
-      coustomer_uuid: customeruuid,
-      hold: hold,
-      mute: mute,
-      ringing: ringing,
-      transfer: transfer,
-      conference: conference,
-      call: call,
-      disposetime: Math.floor(Math.random() * 10) + 1,
-    });
+    // bulkDatam.push({
+    //   datetime: datetime  ,
+    //   calltype: callType,
+    //   disposetype: disposeType,
+    //   disposename: disposeName,
+    //   duration: duration,
+    //   agentname: agents,
+    //   campaignName: campaign,
+    //   processName: process,
+    //   leadset: leadid,
+    //   refrence_uuid: referenceuuid,
+    //   coustomer_uuid: customeruuid,
+    //   hold: hold,
+    //   mute: mute,
+    //   ringing: ringing,
+    //   transfer: transfer,
+    //   conference: conference,
+    //   call: call,
+    //   disposetime: Math.floor(Math.random() * 10) + 1,
+    // });
     // console.log(bulkDatam)
     // return bulkDatam;
 
@@ -356,27 +357,27 @@ async function bulkDataInsert() {
     // ]);
 
     //Elastic database
-    // bulkDataE.push({ index: { _index: "ajay" } });
-    // bulkDataE.push({
-    //   datetime: datetime,
-    //   calltype: callType,
-    //   disposetype: disposeType,
-    //   disposename: disposeName,
-    //   duration: duration,
-    //   agentname: agents,
-    //   campaignName: campaign,
-    //   processName: process,
-    //   leadset: leadid,
-    //   refrence_uuid: referenceuuid,
-    //   coustomer_uuid: customeruuid,
-    //   hold: hold,
-    //   mute: mute,
-    //   ringing: ringing,
-    //   transfer: transfer,
-    //   conference: conference,
-    //   call: call,
-    //   disposetime: disposeTime,
-    // });
+    bulkDataE.push({ index: { _index: "ajay" } });
+    bulkDataE.push({
+      datetime: datetime,
+      calltype: callType,
+      disposetype: disposeType,
+      disposename: disposeName,
+      duration: duration,
+      agentname: agents,
+      campaignName: campaign,
+      processName: process,
+      leadset: leadid,
+      refrence_uuid: referenceuuid,
+      coustomer_uuid: customeruuid,
+      hold: hold,
+      mute: mute,
+      ringing: ringing,
+      transfer: transfer,
+      conference: conference,
+      call: call,
+      disposetime: disposeTime,
+    });
     
   }
 }
