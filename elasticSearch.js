@@ -3,6 +3,7 @@ const client = new Client({ node: "http://192.168.0.133:9200/" });
 const restify = require("restify");
 const dotenv = require("dotenv");
 const utils = require("./utils");
+const { bulkDataE } = require("./utils");
 dotenv.config();
 const server = restify.createServer();
 const port = process.env.ELASTICPORT;
@@ -24,7 +25,7 @@ server.post("/elasticsearch/bulkdata", async (req, res) => {
   const insertBigData = await utils.bulkDataInsert();
   console.log(insertBigData);
   try { 
-    const response = await client.bulk({ body: insertBigData });
+    const response = await client.bulk({ body: bulkDataE });
     // console.log(response);
     res.send("Bulk data created successfully");
   } catch (error) {

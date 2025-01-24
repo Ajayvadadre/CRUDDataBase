@@ -398,5 +398,8 @@ function getRandomTimeOfDay() {
 
 module.exports = {
   bulkDataInsert,
-  bulkDatam
+  bulkDataE,
+  bulkDatam,
+  bulkDataE
+  
 };
